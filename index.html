@@ -6,167 +6,58 @@
     <link rel="icon" href="ometv.jpg" type="x-png">
     <title>Ed TV</title>
     <style>
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* --- ESTILOS GLOBALES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
+            background-color: #000; color: #fff; overflow: hidden; height: 100vh; display: flex;
         }
-
-        /* --- LADO IZQUIERDO (INTERFAZ DE USUARIO) --- */
+        /* --- LADO IZQUIERDO --- */
         .user-interface {
-            width: 30%;
-            min-width: 300px;
-            background-color: #111;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            position: relative;
-            z-index: 2;
+            width: 30%; min-width: 300px; background-color: #111;
+            display: flex; flex-direction: column; align-items: center; padding: 20px; position: relative; z-index: 2;
         }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 40px; /* Aumenté el margen para rellenar el espacio */
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .logo i {
-            color: #ff9500;
-            margin-right: 10px;
-            font-size: 2rem;
-        }
-
-        .online-users {
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-        .active-viewers {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 5px;
-        }
-        
-        .status-indicator { 
-            margin-top: 15px; 
-            padding: 10px; 
-            border-radius: 8px; 
-            text-align: center; 
-            font-weight: bold; 
-            display: none; /* Oculto por defecto */
-        }
+        .logo-section { text-align: center; margin-bottom: 20px; }
+        .logo { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .logo i { color: #ff9500; margin-right: 10px; font-size: 2rem; }
+        .online-users { font-size: 0.9rem; color: #aaa; }
+        .active-viewers { font-size: 0.8rem; color: #888; margin-top: 5px; }
+        .selected-country { font-size: 0.8rem; color: #ff9500; margin-top: 5px; font-weight: bold; }
+        .status-indicator { margin-top: 15px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
         .status-indicator.waiting { background-color: rgba(255, 149, 0, 0.2); color: #ff9500; }
         .status-indicator.connected { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; }
-
-        .control-buttons {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            gap: 10px;
-        }
-
+        .control-buttons { display: flex; flex-direction: column; width: 100%; gap: 10px; margin-top: 20px; }
         .control-btn {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #fff;
-            background-color: #ff9500;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold;
+            color: #fff; background-color: #ff9500; cursor: pointer; transition: all 0.3s ease;
         }
-
-        .control-btn:hover {
-            background-color: #e68500;
-            transform: translateY(-2px);
-        }
-
-        .control-btn.stop {
-            background-color: #d32f2f;
-        }
-
-        .control-btn.stop:hover {
-            background-color: #b71c1c;
-        }
-        
-        .control-btn.next { 
-            background-color: #007aff; 
-            display: none; /* Oculto por defecto */
-        }
-        .control-btn.next:hover { 
-            background-color: #005ecb; 
-        }
-
+        .control-btn:hover { transform: translateY(-2px); }
+        .control-btn:disabled { background-color: #555; cursor: not-allowed; transform: none; }
+        .control-btn.stop { background-color: #d32f2f; }
+        .control-btn.stop:hover { background-color: #b71c1c; }
+        .control-btn.next { background-color: #007aff; }
+        .control-btn.next:hover { background-color: #005ecb; }
+        /* --- LADO DERECHO --- */
         .video-chat-area {
-            flex-grow: 1;
-            position: relative;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-grow: 1; position: relative; background-color: #000;
+            display: flex; justify-content: center; align-items: center;
         }
-
-        #strangerVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: none;
+        /* --- VIDEOS --- */
+        #strangerVideo, #userVideo {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; display: none;
         }
-
         #userVideo {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 200px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 2px solid #ff9500;
-            z-index: 3;
-            display: none;
+            width: 200px; height: 150px; bottom: 20px; left: 20px; top: auto;
+            border-radius: 10px; border: 2px solid #ff9500; z-index: 3;
         }
-        
+        /* --- MENSAJES Y CONTROLES --- */
         .overlay-message {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            color: #fff;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 20px 30px;
-            border-radius: 10px;
-            z-index: 4;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            text-align: center; color: #fff; background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px 30px; border-radius: 10px; z-index: 4;
         }
-        
-        .searching-text { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin-top: 10px; 
-        }
+        .searching-text { display: flex; align-items: center; justify-content: center; margin-top: 10px; }
         .searching-text .dot {
             width: 8px; height: 8px; background-color: #ff9500; border-radius: 50%; margin: 0 3px;
             animation: bounce 1.4s infinite ease-in-out both;
@@ -174,152 +65,49 @@
         .searching-text .dot:nth-child(1) { animation-delay: -0.32s; }
         .searching-text .dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-        .top-controls {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 4;
-            display: none;
-        }
-
+        .top-controls { position: absolute; top: 20px; right: 20px; z-index: 4; display: none; }
         .top-controls button {
-            background: rgba(0,0,0,0.5);
-            border: none;
-            color: #fff;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin-left: 15px;
-            padding: 8px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 1.2rem;
+            cursor: pointer; margin-left: 15px; padding: 8px; border-radius: 5px; transition: background-color 0.3s;
         }
-        .top-controls button:hover {
-            background-color: rgba(255,255,255,0.2);
-        }
-        .top-controls button.active {
-            color: #ff9500;
-        }
-
-        .report-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            color: #fff;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 5px;
-            z-index: 4;
-            display: none;
-        }
-        .report-btn:hover {
-            color: #d32f2f;
-        }
-
+        .top-controls button:hover { background-color: rgba(255,255,255,0.2); }
+        .top-controls button.active { color: #ff9500; }
+        .report-btn { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 5px; z-index: 4; display: none; }
+        .report-btn:hover { color: #d32f2f; }
+        /* --- CHAT --- */
         .chat-overlay {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 40%;
-            max-width: 450px;
-            height: 50%;
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 4;
+            position: absolute; bottom: 20px; right: 20px; width: 40%; max-width: 450px; height: 50%;
+            background-color: rgba(0, 0, 0, 0.6); border-radius: 10px; display: none;
+            flex-direction: column; overflow: hidden; z-index: 4;
         }
-
-        .chat-messages {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            font-size: 0.9rem;
-        }
-
+        .chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; }
         .message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 80%;
-            line-height: 1.4;
-            word-wrap: break-word;
-            clear: both;
+            margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 80%;
+            line-height: 1.4; word-wrap: break-word; clear: both;
         }
-
-        .message.you {
-            background-color: #007aff;
-            float: right;
-        }
-
-        .message.stranger {
-            background-color: #333;
-            float: left;
-        }
-
-        .chat-input-area {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid #444;
-        }
-
+        .message.you { background-color: #007aff; float: right; }
+        .message.stranger { background-color: #333; float: left; }
+        .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #444; }
         .chat-input-area input {
-            flex-grow: 1;
-            padding: 8px;
-            border: 1px solid #555;
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-radius: 15px;
-            outline: none;
+            flex-grow: 1; padding: 8px; border: 1px solid #555; background-color: rgba(255, 255, 255, 0.1);
+            color: #fff; border-radius: 15px; outline: none;
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 10;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: #222;
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .modal-content ul {
-            list-style: none;
-            text-align: left;
-            padding: 0;
-        }
-        .modal-content li {
-            padding: 10px;
-            border-bottom: 1px solid #444;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .modal-content li:hover {
-            background-color: #333;
-        }
-        .close-modal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .modal-content { background-color: #222; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; text-align: center; max-height: 80vh; overflow-y: auto; }
+        .modal-content h2 { margin-bottom: 20px; }
+        .modal-content p { margin-bottom: 25px; color: #ccc; }
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; transition: background-color 0.3s; }
+        .modal-btn.yes { background-color: #4CAF50; color: white; }
+        .modal-btn.yes:hover { background-color: #45a049; }
+        .modal-btn.no { background-color: #f44336; color: white; }
+        .modal-btn.no:hover { background-color: #da190b; }
+        .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close-modal:hover { color: #fff; }
-
+        .modal-content ul { list-style: none; text-align: left; padding: 0; max-height: 300px; overflow-y: auto; }
+        .modal-content li { padding: 10px; border-bottom: 1px solid #444; cursor: pointer; transition: background-color 0.2s; }
+        .modal-content li:hover { background-color: #333; }
     </style>
     <!-- Font Awesome y Firebase SDK -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -328,14 +116,24 @@
 </head>
 <body>
 
+    <!-- Modal de Permisos de Media -->
+    <div id="mediaPermissionModal" class="modal" style="display: flex;">
+        <div class="modal-content">
+            <h2>¡Bienvenido a Ed TV!</h2>
+            <p>¿Deseas usar tu cámara y micrófono para chatear por video? Puedes cambiar esto más tarde.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn yes" id="mediaYesBtn">Sí</button>
+                <button class="modal-btn no" id="mediaNoBtn">No, solo texto</button>
+            </div>
+        </div>
+    </div>
+
     <div class="user-interface">
         <div class="logo-section">
-            <div class="logo">
-                <i class="fas fa-tv"></i>
-                <span>Ed TV</span>
-            </div>
+            <div class="logo"><i class="fas fa-tv"></i><span>Ed TV</span></div>
             <div class="online-users" id="globalUsersCount">EdTV Jugadores Count:</div>
             <div class="active-viewers" id="activeViewersCount">0 espectadores activos</div>
+            <div class="selected-country" id="selectedCountryDisplay">País: Global</div>
         </div>
         
         <div id="statusIndicator" class="status-indicator waiting">
@@ -344,8 +142,8 @@
 
         <div class="control-buttons">
             <button class="control-btn" id="startButton">Iniciar</button>
-            <button class="control-btn next" id="nextButton">Siguiente</button>
-            <button class="control-btn stop" id="stopButton">Parar</button>
+            <button class="control-btn next" id="nextButton" style="display:none;">Siguiente</button>
+            <button class="control-btn stop" id="stopButton" style="display:none;">Parar</button>
             <button class="control-btn" id="countryButton">País</button>
             <button class="control-btn" id="iamButton">Soy</button>
         </div>
@@ -354,24 +152,19 @@
     <div class="video-chat-area">
         <video id="strangerVideo" autoplay></video>
         <video id="userVideo" autoplay muted></video>
-
         <button class="report-btn" id="reportButton" style="display:none;"><i class="fas fa-flag"></i></button>
-
         <div id="startPrompt" class="overlay-message">
-            <p>Para comenzar, presiona <strong>Iniciar</strong> y acepta las reglas. Mantén tu cámara visible.</p>
+            <p>Presiona <strong>Iniciar</strong> para encontrar a alguien con quien hablar.</p>
         </div>
-        
         <div id="searchingPrompt" class="overlay-message" style="display: none;">
             <p>Buscando a alguien...</p>
             <div class="searching-text"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
         </div>
-        
         <div class="top-controls" id="topControls">
-            <button id="micButton"><i class="fas fa-microphone-slash"></i></button>
-            <button id="fullscreenButton"><i class="fas fa-expand"></i></button>
-            <button id="settingsButton"><i class="fas fa-cog"></i></button>
+            <button id="micButton" title="Micrófono"><i class="fas fa-microphone-slash"></i></button>
+            <button id="fullscreenButton" title="Pantalla Completa"><i class="fas fa-expand"></i></button>
+            <button id="settingsButton" title="Configuración"><i class="fas fa-cog"></i></button>
         </div>
-
         <div class="chat-overlay" id="chatOverlay">
             <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-area">
@@ -382,7 +175,7 @@
         </div>
     </div>
 
-    <!-- Modals (sin cambios) -->
+    <!-- Modals -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('settingsModal')">&times;</span>
@@ -394,13 +187,62 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('countryModal')">&times;</span>
             <h2>Selecciona tu país</h2>
-            <ul>
-                <li>España</li>
-                <li>México</li>
-                <li>Argentina</li>
-                <li>Colombia</li>
-                <li>Estados Unidos</li>
-                <li>Venezolano</li>
+            <ul id="countryList">
+                <li data-country="global">🌍 Global</li>
+                <li data-country="es">🇪🇸 España</li>
+                <li data-country="mx">🇲🇽 México</li>
+                <li data-country="ar">🇦🇷 Argentina</li>
+                <li data-country="co">🇨🇴 Colombia</li>
+                <li data-country="us">🇺🇸 Estados Unidos</li>
+                <li data-country="ve">🇻🇪 Venezuela</li>
+                <li data-country="pe">🇵🇪 Perú</li>
+                <li data-country="cl">🇨🇱 Chile</li>
+                <li data-country="ec">🇪🇨 Ecuador</li>
+                <li data-country="gt">🇬🇹 Guatemala</li>
+                <li data-country="cu">🇨🇺 Cuba</li>
+                <li data-country="bo">🇧🇴 Bolivia</li>
+                <li data-country="do">🇩🇴 República Dominicana</li>
+                <li data-country="hn">🇭🇳 Honduras</li>
+                <li data-country="py">🇵🇾 Paraguay</li>
+                <li data-country="sv">🇸🇻 El Salvador</li>
+                <li data-country="ni">🇳🇮 Nicaragua</li>
+                <li data-country="cr">🇨🇷 Costa Rica</li>
+                <li data-country="pa">🇵🇦 Panamá</li>
+                <li data-country="uy">🇺🇾 Uruguay</li>
+                <li data-country="fr">🇫🇷 Francia</li>
+                <li data-country="it">🇮🇹 Italia</li>
+                <li data-country="de">🇩🇪 Alemania</li>
+                <li data-country="br">🇧🇷 Brasil</li>
+                <li data-country="ca">🇨🇦 Canadá</li>
+                <li data-country="jp">🇯🇵 Japón</li>
+                <li data-country="cn">🇨🇳 China</li>
+                <li data-country="ru">🇷🇺 Rusia</li>
+                <li data-country="in">🇮🇳 India</li>
+                <li data-country="gb">🇬🇧 Reino Unido</li>
+                <li data-country="au">🇦🇺 Australia</li>
+                <li data-country="za">🇿🇦 Sudáfrica</li>
+                <li data-country="kr">🇰🇷 Corea del Sur</li>
+                <li data-country="nl">🇳🇱 Países Bajos</li>
+                <li data-country="be">🇧🇪 Bélgica</li>
+                <li data-country="se">🇸🇪 Suecia</li>
+                <li data-country="no">🇳🇴 Noruega</li>
+                <li data-country="fi">🇫🇮 Finlandia</li>
+                <li data-country="dk">🇩🇰 Dinamarca</li>
+                <li data-country="pl">🇵🇱 Polonia</li>
+                <li data-country="pt">🇵🇹 Portugal</li>
+                <li data-country="gr">🇬🇷 Grecia</li>
+                <li data-country="tr">🇹🇷 Turquía</li>
+                <li data-country="il">🇮🇱 Israel</li>
+                <li data-country="sa">🇸🇦 Arabia Saudita</li>
+                <li data-country="eg">🇪🇬 Egipto</li>
+                <li data-country="ng">🇳🇬 Nigeria</li>
+                <li data-country="ke">🇰🇪 Kenia</li>
+                <li data-country="th">🇹🇭 Tailandia</li>
+                <li data-country="vn">🇻🇳 Vietnam</li>
+                <li data-country="ph">🇵🇭 Filipinas</li>
+                <li data-country="my">🇲🇾 Malasia</li>
+                <li data-country="sg">🇸🇬 Singapur</li>
+                <li data-country="nz">🇳🇿 Nueva Zelanda</li>
             </ul>
         </div>
     </div>
@@ -429,9 +271,43 @@
                 appId: "1:187498566550:web:2a0857ace642f72c0743b7",
                 measurementId: "G-893TPBP83N"
             };
-            // Inicializar Firebase
             firebase.initializeApp(firebaseConfig);
             const database = firebase.database();
+
+            // --- GESTIÓN DE PERMISOS Y CACHE ---
+            let mediaPermissionGranted = null;
+            let selectedCountry = localStorage.getItem('edtv_selected_country') || 'global';
+            const mediaPermissionModal = document.getElementById('mediaPermissionModal');
+            const mediaYesBtn = document.getElementById('mediaYesBtn');
+            const mediaNoBtn = document.getElementById('mediaNoBtn');
+            const selectedCountryDisplay = document.getElementById('selectedCountryDisplay');
+
+            const updateCountryDisplay = () => {
+                const countryName = document.querySelector(`#countryList li[data-country="${selectedCountry}"]`)?.textContent || 'Global';
+                selectedCountryDisplay.textContent = `País: ${countryName}`;
+            };
+
+            const checkMediaPermission = () => {
+                const permission = localStorage.getItem('edtv_media_permission');
+                if (permission === null) {
+                    mediaPermissionModal.style.display = 'flex';
+                } else {
+                    mediaPermissionGranted = (permission === 'granted');
+                    mediaPermissionModal.style.display = 'none';
+                }
+            };
+
+            mediaYesBtn.addEventListener('click', () => {
+                localStorage.setItem('edtv_media_permission', 'granted');
+                mediaPermissionGranted = true;
+                mediaPermissionModal.style.display = 'none';
+            });
+
+            mediaNoBtn.addEventListener('click', () => {
+                localStorage.setItem('edtv_media_permission', 'denied');
+                mediaPermissionGranted = false;
+                mediaPermissionModal.style.display = 'none';
+            });
 
             // --- ELEMENTOS DEL DOM ---
             const startButton = document.getElementById('startButton');
@@ -448,7 +324,6 @@
             const messageForm = document.getElementById('messageForm');
             const messageInput = document.getElementById('messageInput');
             const micButton = document.getElementById('micButton');
-            const fullscreenButton = document.getElementById('fullscreenButton');
             const reportButton = document.getElementById('reportButton');
             const globalUsersCount = document.getElementById('globalUsersCount');
             const activeViewersCount = document.getElementById('activeViewersCount');
@@ -460,30 +335,48 @@
             let strangerId = null;
             let isInitiator = false;
             let roomRef = null;
-            let waitingRef = database.ref('/waiting');
+            let waitingRef = database.ref('/waiting/' + selectedCountry);
             let messageListener = null;
 
             // --- FUNCIONES PRINCIPALES ---
             const generateId = () => Math.random().toString(36).substring(2, 15);
 
+            const getLocalMedia = async () => {
+                if (mediaPermissionGranted) {
+                    try {
+                        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                        userVideo.srcObject = localStream;
+                        userVideo.style.display = 'block';
+                        micButton.querySelector('i').className = 'fas fa-microphone';
+                        micButton.classList.add('active');
+                    } catch (err) {
+                        // El usuario denegó el permiso, no hacemos nada y continuamos sin video.
+                    }
+                }
+            };
+
             const createPeerConnection = async () => {
                 const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
                 myPeerConnection = new RTCPeerConnection(configuration);
 
-                localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
+                if (localStream) {
+                    localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
+                }
                 
                 myPeerConnection.ontrack = event => {
-                    strangerVideo.srcObject = event.streams[0];
-                    strangerVideo.style.display = 'block';
+                    if (event.streams && event.streams[0]) {
+                        strangerVideo.srcObject = event.streams[0];
+                        strangerVideo.style.display = 'block';
+                    }
                 };
 
                 myPeerConnection.onicecandidate = event => {
-                    if (event.candidate && strangerId) {
+                    if (event.candidate && strangerId && roomRef) {
                         roomRef.child('iceCandidates').push(event.candidate.toJSON());
                     }
                 };
             };
-
+            
             const startChat = async () => {
                 startButton.disabled = true;
                 startPrompt.style.display = 'none';
@@ -491,17 +384,7 @@
                 statusIndicator.style.display = 'block';
                 statusIndicator.textContent = "Buscando a alguien...";
                 
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                    userVideo.srcObject = localStream;
-                    userVideo.style.display = 'block';
-                } catch (err) {
-                    console.error("Error al acceder a la cámara/micrófono:", err);
-                    alert("Necesitas permitir el acceso a la cámara y el micrófono.");
-                    stopChat();
-                    return;
-                }
-
+                await getLocalMedia();
                 myId = generateId();
                 
                 waitingRef.once('value', snapshot => {
@@ -509,12 +392,20 @@
                     if (waitingUsers && Object.keys(waitingUsers).length > 0) {
                         strangerId = Object.keys(waitingUsers)[0];
                         isInitiator = false;
-                        console.log(`Conectando con ${strangerId}`);
+                        waitingRef.child(strangerId).remove();
                         startConnection();
                     } else {
                         isInitiator = true;
-                        console.log("Esperando a otro usuario...");
                         waitingRef.child(myId).set({ timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        
+                        waitingRef.on('child_added', snapshot => {
+                            if (snapshot.key !== myId) {
+                                strangerId = snapshot.key;
+                                waitingRef.child(myId).remove();
+                                waitingRef.off();
+                                startConnection();
+                            }
+                        });
                     }
                 });
             };
@@ -569,17 +460,9 @@
             };
 
             const disconnect = () => {
-                if (myPeerConnection) {
-                    myPeerConnection.close();
-                    myPeerConnection.ontrack = null;
-                    myPeerConnection.onicecandidate = null;
-                }
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                if (messageListener) {
-                    roomRef.child('messages').off('child_added', messageListener);
-                }
+                if (myPeerConnection) myPeerConnection.close();
+                if (localStream) localStream.getTracks().forEach(track => track.stop());
+                if (messageListener && roomRef) roomRef.child('messages').off('child_added', messageListener);
                 
                 if (myId) {
                     waitingRef.child(myId).remove();
@@ -620,7 +503,16 @@
                 
                 myId = generateId();
                 isInitiator = true;
+                waitingRef = database.ref('/waiting/' + selectedCountry); // Asegurarse de que usa el país correcto
                 waitingRef.child(myId).set({ timestamp: firebase.database.ServerValue.TIMESTAMP });
+                waitingRef.on('child_added', snapshot => {
+                    if (snapshot.key !== myId) {
+                        strangerId = snapshot.key;
+                        waitingRef.child(myId).remove();
+                        waitingRef.off();
+                        startConnection();
+                    }
+                });
             };
 
             const addMessage = (text, sender) => {
@@ -638,14 +530,16 @@
                 }
             };
             
-            const toggleMicrophone = async () => {
+            const toggleMicrophone = () => {
+                if (!localStream) return;
+                const audioTrack = localStream.getAudioTracks()[0];
                 const icon = micButton.querySelector('i');
-                if (localStream.getAudioTracks()[0].enabled) {
-                    localStream.getAudioTracks()[0].enabled = false;
+                if (audioTrack.enabled) {
+                    audioTrack.enabled = false;
                     icon.className = 'fas fa-microphone-slash';
                     micButton.classList.remove('active');
                 } else {
-                    localStream.getAudioTracks()[0].enabled = true;
+                    audioTrack.enabled = true;
                     icon.className = 'fas fa-microphone';
                     micButton.classList.add('active');
                 }
@@ -654,10 +548,10 @@
             const toggleFullscreen = () => {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen();
-                    fullscreenButton.querySelector('i').className = 'fas fa-compress';
+                    document.getElementById('fullscreenButton').querySelector('i').className = 'fas fa-compress';
                 } else {
                     document.exitFullscreen();
-                    fullscreenButton.querySelector('i').className = 'fas fa-expand';
+                    document.getElementById('fullscreenButton').querySelector('i').className = 'fas fa-expand';
                 }
             };
             
@@ -670,9 +564,8 @@
             nextButton.addEventListener('click', nextStranger);
             stopButton.addEventListener('click', stopChat);
             micButton.addEventListener('click', toggleMicrophone);
-            fullscreenButton.addEventListener('click', toggleFullscreen);
+            document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
             document.getElementById('settingsButton').addEventListener('click', () => openModal('settingsModal'));
-            document.getElementById('countryButton').addEventListener('click', () => openModal('countryModal'));
             document.getElementById('iamButton').addEventListener('click', () => openModal('iamModal'));
             reportButton.addEventListener('click', () => alert('Usuario reportado. (Función de ejemplo)'));
             
@@ -685,22 +578,28 @@
                 }
             });
 
-            waitingRef.on('value', snapshot => {
-                const count = snapshot.numChildren();
-                activeViewersCount.textContent = `${count} espectadores activos`;
-                
-                if (isInitiator && count > 1) {
-                    const users = snapshot.val();
-                    for (const id in users) {
-                        if (id !== myId) {
-                            strangerId = id;
-                            waitingRef.child(myId).remove();
-                            startConnection();
-                            break;
-                        }
-                    }
+            // Listener para la lista de países
+            document.getElementById('countryList').addEventListener('click', (e) => {
+                if (e.target.tagName === 'LI') {
+                    selectedCountry = e.target.dataset.country;
+                    localStorage.setItem('edtv_selected_country', selectedCountry);
+                    updateCountryDisplay();
+                    waitingRef = database.ref('/waiting/' + selectedCountry); // Actualizar la referencia de espera
+                    closeModal('countryModal');
                 }
             });
+            
+            document.getElementById('countryButton').addEventListener('click', () => openModal('countryModal'));
+
+            // Actualizar contador de espectadores para el país seleccionado
+            database.ref('/waiting/' + selectedCountry).on('value', snapshot => {
+                const count = snapshot.numChildren();
+                activeViewersCount.textContent = `${count} espectadores activos`;
+            });
+
+            // Inicializar
+            checkMediaPermission();
+            updateCountryDisplay();
 
             let globalUsers = 312931;
             setInterval(() => {
