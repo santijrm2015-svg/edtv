@@ -6,7 +6,7 @@
     <link rel="icon" href="ometv.jpg" type="x-png">
     <title>Ed TV</title>
     <style>
-        /* --- ESTILOS GLOBALES Y CLON DE OME TV --- */
+        
         * {
             margin: 0;
             padding: 0;
@@ -64,7 +64,17 @@
             color: #888;
             margin-top: 5px;
         }
-
+        
+        .status-indicator { 
+            margin-top: 15px; 
+            padding: 10px; 
+            border-radius: 8px; 
+            text-align: center; 
+            font-weight: bold; 
+            display: none; /* Oculto por defecto */
+        }
+        .status-indicator.waiting { background-color: rgba(255, 149, 0, 0.2); color: #ff9500; }
+        .status-indicator.connected { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; }
 
         .control-buttons {
             display: flex;
@@ -96,6 +106,14 @@
 
         .control-btn.stop:hover {
             background-color: #b71c1c;
+        }
+        
+        .control-btn.next { 
+            background-color: #007aff; 
+            display: none; /* Oculto por defecto */
+        }
+        .control-btn.next:hover { 
+            background-color: #005ecb; 
         }
 
         .video-chat-area {
@@ -142,6 +160,20 @@
             border-radius: 10px;
             z-index: 4;
         }
+        
+        .searching-text { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-top: 10px; 
+        }
+        .searching-text .dot {
+            width: 8px; height: 8px; background-color: #ff9500; border-radius: 50%; margin: 0 3px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .searching-text .dot:nth-child(1) { animation-delay: -0.32s; }
+        .searching-text .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
         .top-controls {
             position: absolute;
@@ -216,17 +248,17 @@
             max-width: 80%;
             line-height: 1.4;
             word-wrap: break-word;
+            clear: both;
         }
 
         .message.you {
             background-color: #007aff;
-            align-self: flex-end;
-            text-align: right;
+            float: right;
         }
 
         .message.stranger {
             background-color: #333;
-            align-self: flex-start;
+            float: left;
         }
 
         .chat-input-area {
@@ -289,7 +321,10 @@
         .close-modal:hover { color: #fff; }
 
     </style>
+    <!-- Font Awesome y Firebase SDK -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -302,10 +337,14 @@
             <div class="online-users" id="globalUsersCount">EdTV Jugadores Count:</div>
             <div class="active-viewers" id="activeViewersCount">0 espectadores activos</div>
         </div>
-
+        
+        <div id="statusIndicator" class="status-indicator waiting">
+            Esperando a alguien...
+        </div>
 
         <div class="control-buttons">
             <button class="control-btn" id="startButton">Iniciar</button>
+            <button class="control-btn next" id="nextButton">Siguiente</button>
             <button class="control-btn stop" id="stopButton">Parar</button>
             <button class="control-btn" id="countryButton">País</button>
             <button class="control-btn" id="iamButton">Soy</button>
@@ -313,15 +352,18 @@
     </div>
 
     <div class="video-chat-area">
-        <video id="strangerVideo" autoplay muted loop>
-            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-        </video>
+        <video id="strangerVideo" autoplay></video>
         <video id="userVideo" autoplay muted></video>
 
         <button class="report-btn" id="reportButton" style="display:none;"><i class="fas fa-flag"></i></button>
 
         <div id="startPrompt" class="overlay-message">
             <p>Para comenzar, presiona <strong>Iniciar</strong> y acepta las reglas. Mantén tu cámara visible.</p>
+        </div>
+        
+        <div id="searchingPrompt" class="overlay-message" style="display: none;">
+            <p>Buscando a alguien...</p>
+            <div class="searching-text"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
         </div>
         
         <div class="top-controls" id="topControls">
@@ -340,6 +382,7 @@
         </div>
     </div>
 
+    <!-- Modals (sin cambios) -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('settingsModal')">&times;</span>
@@ -375,11 +418,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURACIÓN DE FIREBASE ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyD33dZKI79FQokc9Y0WdoYyvB_4rTHdKX8",
+                authDomain: "edtv-ab5b7.firebaseapp.com",
+                databaseURL: "https://edtv-ab5b7-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "edtv-ab5b7",
+                storageBucket: "edtv-ab5b7.firebasestorage.app",
+                messagingSenderId: "187498566550",
+                appId: "1:187498566550:web:2a0857ace642f72c0743b7",
+                measurementId: "G-893TPBP83N"
+            };
+            // Inicializar Firebase
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+
+            // --- ELEMENTOS DEL DOM ---
             const startButton = document.getElementById('startButton');
+            const nextButton = document.getElementById('nextButton');
             const stopButton = document.getElementById('stopButton');
             const strangerVideo = document.getElementById('strangerVideo');
             const userVideo = document.getElementById('userVideo');
             const startPrompt = document.getElementById('startPrompt');
+            const searchingPrompt = document.getElementById('searchingPrompt');
+            const statusIndicator = document.getElementById('statusIndicator');
             const topControls = document.getElementById('topControls');
             const chatOverlay = document.getElementById('chatOverlay');
             const chatMessages = document.getElementById('chatMessages');
@@ -388,30 +450,179 @@
             const micButton = document.getElementById('micButton');
             const fullscreenButton = document.getElementById('fullscreenButton');
             const reportButton = document.getElementById('reportButton');
+            const globalUsersCount = document.getElementById('globalUsersCount');
+            const activeViewersCount = document.getElementById('activeViewersCount');
 
-            let userStream = null;
-            let audioStream = null;
-            let conversationHistory = [];
-            const API_URL = 'http://localhost:3001/chat';
-            const WS_URL = 'ws://localhost:3001';
+            // --- ESTADO Y VARIABLES DE WEBRTC ---
+            let localStream = null;
+            let myPeerConnection = null;
+            let myId = null;
+            let strangerId = null;
+            let isInitiator = false;
+            let roomRef = null;
+            let waitingRef = database.ref('/waiting');
+            let messageListener = null;
 
-            const ws = new WebSocket(WS_URL);
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'viewerCount') {
-                    document.getElementById('activeViewersCount').textContent = `${data.count} espectadores activos`;
-                }
+            // --- FUNCIONES PRINCIPALES ---
+            const generateId = () => Math.random().toString(36).substring(2, 15);
+
+            const createPeerConnection = async () => {
+                const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+                myPeerConnection = new RTCPeerConnection(configuration);
+
+                localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
+                
+                myPeerConnection.ontrack = event => {
+                    strangerVideo.srcObject = event.streams[0];
+                    strangerVideo.style.display = 'block';
+                };
+
+                myPeerConnection.onicecandidate = event => {
+                    if (event.candidate && strangerId) {
+                        roomRef.child('iceCandidates').push(event.candidate.toJSON());
+                    }
+                };
             };
 
-            let globalUsers = 312931;
-            setInterval(() => {
-                const change = Math.floor(Math.random() * 21) - 10;
-                globalUsers += change;
-                if (globalUsers < 300000) globalUsers = 300000;
-                document.getElementById('globalUsersCount').textContent = `${globalUsers.toLocaleString('es-ES')} usuarios en línea`;
-            }, 5000);
+            const startChat = async () => {
+                startButton.disabled = true;
+                startPrompt.style.display = 'none';
+                searchingPrompt.style.display = 'block';
+                statusIndicator.style.display = 'block';
+                statusIndicator.textContent = "Buscando a alguien...";
+                
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    userVideo.srcObject = localStream;
+                    userVideo.style.display = 'block';
+                } catch (err) {
+                    console.error("Error al acceder a la cámara/micrófono:", err);
+                    alert("Necesitas permitir el acceso a la cámara y el micrófono.");
+                    stopChat();
+                    return;
+                }
 
-            // --- FUNCIONES ---
+                myId = generateId();
+                
+                waitingRef.once('value', snapshot => {
+                    const waitingUsers = snapshot.val();
+                    if (waitingUsers && Object.keys(waitingUsers).length > 0) {
+                        strangerId = Object.keys(waitingUsers)[0];
+                        isInitiator = false;
+                        console.log(`Conectando con ${strangerId}`);
+                        startConnection();
+                    } else {
+                        isInitiator = true;
+                        console.log("Esperando a otro usuario...");
+                        waitingRef.child(myId).set({ timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    }
+                });
+            };
+
+            const startConnection = async () => {
+                statusIndicator.textContent = "Conectando...";
+                statusIndicator.className = 'status-indicator connected';
+                searchingPrompt.style.display = 'none';
+                chatOverlay.style.display = 'flex';
+                topControls.style.display = 'block';
+                reportButton.style.display = 'block';
+                nextButton.style.display = 'block';
+                stopButton.style.display = 'block';
+                
+                roomRef = database.ref(`/rooms/${myId}`);
+                await createPeerConnection();
+                
+                if (isInitiator) {
+                    const offer = await myPeerConnection.createOffer();
+                    await myPeerConnection.setLocalDescription(offer);
+                    roomRef.set({ offer: offer });
+                } else {
+                    database.ref(`/rooms/${strangerId}`).on('value', async snapshot => {
+                        const data = snapshot.val();
+                        if (data && data.offer) {
+                            await myPeerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                            const answer = await myPeerConnection.createAnswer();
+                            await myPeerConnection.setLocalDescription(answer);
+                            roomRef.update({ answer: answer });
+                        }
+                    });
+                }
+
+                database.ref(`/rooms/${strangerId}`).on('value', async snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.answer) {
+                        await myPeerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                    }
+                });
+
+                database.ref(`/rooms/${strangerId}/iceCandidates`).on('child_added', async snapshot => {
+                    const candidate = new RTCIceCandidate(snapshot.val());
+                    await myPeerConnection.addIceCandidate(candidate);
+                });
+                
+                messageListener = roomRef.child('messages').on('child_added', snapshot => {
+                    const messageData = snapshot.val();
+                    if (messageData && messageData.sender !== myId) {
+                        addMessage(messageData.text, 'stranger');
+                    }
+                });
+            };
+
+            const disconnect = () => {
+                if (myPeerConnection) {
+                    myPeerConnection.close();
+                    myPeerConnection.ontrack = null;
+                    myPeerConnection.onicecandidate = null;
+                }
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+                if (messageListener) {
+                    roomRef.child('messages').off('child_added', messageListener);
+                }
+                
+                if (myId) {
+                    waitingRef.child(myId).remove();
+                    if(roomRef) roomRef.remove();
+                }
+                
+                strangerVideo.style.display = 'none';
+                chatOverlay.style.display = 'none';
+                topControls.style.display = 'none';
+                reportButton.style.display = 'none';
+                nextButton.style.display = 'none';
+                stopButton.style.display = 'none';
+                
+                myPeerConnection = null;
+                strangerId = null;
+                roomRef = null;
+                messageListener = null;
+                chatMessages.innerHTML = '';
+            };
+
+            const stopChat = () => {
+                disconnect();
+                userVideo.style.display = 'none';
+                startPrompt.style.display = 'block';
+                searchingPrompt.style.display = 'none';
+                statusIndicator.style.display = 'none';
+                startButton.disabled = false;
+                myId = null;
+                localStream = null;
+            };
+            
+            const nextStranger = () => {
+                disconnect();
+                searchingPrompt.style.display = 'block';
+                statusIndicator.style.display = 'block';
+                statusIndicator.textContent = "Buscando a alguien...";
+                statusIndicator.className = 'status-indicator waiting';
+                
+                myId = generateId();
+                isInitiator = true;
+                waitingRef.child(myId).set({ timestamp: firebase.database.ServerValue.TIMESTAMP });
+            };
+
             const addMessage = (text, sender) => {
                 const messageDiv = document.createElement('div');
                 messageDiv.classList.add('message', sender);
@@ -419,47 +630,24 @@
                 chatMessages.appendChild(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             };
-            
-            const getBotResponse = async (userMessage) => {
-                conversationHistory.push({ role: 'user', content: userMessage });
-                try {
-                    const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: conversationHistory }) });
-                    const data = await response.json();
-                    const botReply = data.reply;
-                    conversationHistory.push({ role: 'assistant', content: botReply });
-                    addMessage(botReply, 'stranger');
-                } catch (error) {
-                    console.error('Error:', error);
-                    addMessage('El extraño se ha desconectado.', 'stranger');
+
+            const sendMessage = (text) => {
+                if (text.trim() && myId && strangerId && roomRef) {
+                    addMessage(text, 'you');
+                    roomRef.child('messages').push({ text: text, sender: myId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 }
             };
-
-            const startMedia = async () => {
-                try {
-                    userStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    userVideo.srcObject = userStream;
-                    userVideo.style.display = 'block';
-                } catch (error) { console.error("Error de cámara:", error); userVideo.style.display = 'none'; }
-            };
-            const stopMedia = () => {
-                if (userStream) { userStream.getTracks().forEach(t => t.stop()); userStream = null; }
-                if (audioStream) { audioStream.getTracks().forEach(t => t.stop()); audioStream = null; }
-                userVideo.style.display = 'none';
-            };
-
+            
             const toggleMicrophone = async () => {
                 const icon = micButton.querySelector('i');
-                if (audioStream) {
-                    audioStream.getTracks().forEach(t => t.stop());
-                    audioStream = null;
+                if (localStream.getAudioTracks()[0].enabled) {
+                    localStream.getAudioTracks()[0].enabled = false;
                     icon.className = 'fas fa-microphone-slash';
                     micButton.classList.remove('active');
                 } else {
-                    try {
-                        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        icon.className = 'fas fa-microphone';
-                        micButton.classList.add('active');
-                    } catch (error) { console.error("Error de micrófono:", error); }
+                    localStream.getAudioTracks()[0].enabled = true;
+                    icon.className = 'fas fa-microphone';
+                    micButton.classList.add('active');
                 }
             };
 
@@ -476,41 +664,51 @@
             const openModal = (modalId) => { document.getElementById(modalId).style.display = 'flex'; };
             const closeModal = (modalId) => { document.getElementById(modalId).style.display = 'none'; };
             window.closeModal = closeModal;
-            
-            const startChat = () => {
-                startPrompt.style.display = 'none';
-                topControls.style.display = 'block';
-                chatOverlay.style.display = 'flex';
-                reportButton.style.display = 'block';
-                
-                strangerVideo.style.display = 'block';
-                strangerVideo.play();
-                startMedia();
-                getBotResponse("Hola, ¿qué tal?");
-            };
 
-            const stopChat = () => {
-                stopMedia();
-                strangerVideo.pause(); strangerVideo.currentTime = 0; strangerVideo.style.display = 'none';
-                conversationHistory = []; chatMessages.innerHTML = '';
-                topControls.style.display = 'none'; chatOverlay.style.display = 'none'; reportButton.style.display = 'none';
-                startPrompt.style.display = 'block';
-            };
-
+            // --- EVENT LISTENERS ---
             startButton.addEventListener('click', startChat);
+            nextButton.addEventListener('click', nextStranger);
             stopButton.addEventListener('click', stopChat);
             micButton.addEventListener('click', toggleMicrophone);
             fullscreenButton.addEventListener('click', toggleFullscreen);
             document.getElementById('settingsButton').addEventListener('click', () => openModal('settingsModal'));
             document.getElementById('countryButton').addEventListener('click', () => openModal('countryModal'));
             document.getElementById('iamButton').addEventListener('click', () => openModal('iamModal'));
-            reportButton.addEventListener('click', () => alert('Usuario reportado. (Solo es una simulación)'));
-
+            reportButton.addEventListener('click', () => alert('Usuario reportado. (Función de ejemplo)'));
+            
             messageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const text = messageInput.value.trim();
-                if (text) { addMessage(text, 'you'); messageInput.value = ''; getBotResponse(text); }
+                if (text) {
+                    sendMessage(text);
+                    messageInput.value = '';
+                }
             });
+
+            waitingRef.on('value', snapshot => {
+                const count = snapshot.numChildren();
+                activeViewersCount.textContent = `${count} espectadores activos`;
+                
+                if (isInitiator && count > 1) {
+                    const users = snapshot.val();
+                    for (const id in users) {
+                        if (id !== myId) {
+                            strangerId = id;
+                            waitingRef.child(myId).remove();
+                            startConnection();
+                            break;
+                        }
+                    }
+                }
+            });
+
+            let globalUsers = 312931;
+            setInterval(() => {
+                const change = Math.floor(Math.random() * 21) - 10;
+                globalUsers += change;
+                if (globalUsers < 300000) globalUsers = 300000;
+                globalUsersCount.textContent = `EdTV Jugadores Count: ${globalUsers.toLocaleString('es-ES')}`;
+            }, 5000);
         });
     </script>
 </body>
